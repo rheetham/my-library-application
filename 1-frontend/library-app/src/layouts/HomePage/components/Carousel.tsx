@@ -1,4 +1,76 @@
+import { ReturnBook } from "./ReturnBook";
+import { useState, useEffect } from "react";
+import BookModel from "./../../../models/BookModel";
+import { SpinnerLoading } from "../../utils/SpinnerLoading";
+
 export const Carousel = () => {
+
+    const [books, setBooks] = useState<BookModel[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [httpError, setHttpError] = useState(null);
+
+    //Called when this component is created
+    useEffect(() => {
+        const fetchBooks = async () => {
+            const baseUrl: string = "http://localhost:8080/api/books";
+
+            //This will load the first nine books
+            const url: string = `${baseUrl}?page=0&size=9`;
+
+            //Data from our API will be stored in response
+            //Contains complete data including pages, size, etc.
+            const response = await fetch(url);
+
+            if(!response.ok) {
+                throw new Error("Something went wrong");
+            }
+
+            //converting to json format
+            const responseJson = await response.json();
+
+            //only retrieving the books from the json data
+            const responseData = await responseJson._embedded.books;
+
+            //array to load data into
+            const loadedBooks: BookModel[] = [];
+
+            //Loading data in BookModel array
+            for(const book in responseData) {
+                loadedBooks.push({
+                    id: responseData[book].id,
+                    title: responseData[book].title,
+                    author: responseData[book].author,
+                    description: responseData[book].description,
+                    copies: responseData[book].copies,
+                    copiesAvailable: responseData[book].copiesAvailable,
+                    img: responseData[book].img
+                });
+            }
+
+            setBooks(loadedBooks);
+            setIsLoading(false);
+        };
+
+        fetchBooks().catch((error: any) => {
+            setIsLoading(false);
+            setHttpError(error.message);
+        });
+    }, []);
+
+    if(isLoading) {
+        return (
+            <SpinnerLoading/>
+        );
+    }
+
+    if(httpError) {
+        return (
+            <div className="container m-5">
+                <p>{httpError}</p>
+            </div>
+        );
+    }
+
     return (
         <div className='container mt-5' style={{ height: 550 }}>
             <div className='homepage-carousel-title'>
@@ -11,53 +83,24 @@ export const Carousel = () => {
                 <div className='carousel-inner'>
                     <div className='carousel-item active'>
                         <div className='row d-flex justify-content-center align-items-center'>
-                            <div className='col-xs-6 col-sm-6 col-md-4 col-lg-3 mb-3'>
-                                <div className='text-center'>
-                                    <img
-                                        src={require('./../../../Images/BooksImages/book-luv2code-1000.png')}
-                                        width='151'
-                                        height='233'
-                                        alt="book"
-                                    />
-                                    <h6 className='mt-2'>Book</h6>
-                                    <p>Luv2Code</p>
-                                    <a className='btn main-color text-white' href='#'>Reserve</a>
-                                </div>
-                            </div>
+                            {/*Retrieve 3 books from books array and map through them*/}
+                            {books.slice(0,3).map(book => (
+                                <ReturnBook book={book} key={book.id} />
+                            ))}
                         </div>
                     </div>
                     <div className='carousel-item'>
                         <div className='row d-flex justify-content-center align-items-center'>
-                            <div className='col-xs-6 col-sm-6 col-md-4 col-lg-3 mb-3'>
-                                <div className='text-center'>
-                                    <img
-                                        src={require('./../../../Images/BooksImages/book-luv2code-1000.png')}
-                                        width='151'
-                                        height='233'
-                                        alt="book"
-                                    />
-                                    <h6 className='mt-2'>Book</h6>
-                                    <p>Luv2Code</p>
-                                    <a className='btn main-color text-white' href='#'>Reserve</a>
-                                </div>
-                            </div>
+                            {books.slice(3,6).map(book => (
+                                <ReturnBook book={book} key={book.id} />
+                            ))}
                         </div>
                     </div>
                     <div className='carousel-item'>
                         <div className='row d-flex justify-content-center align-items-center'>
-                            <div className='col-xs-6 col-sm-6 col-md-4 col-lg-3 mb-3'>
-                                <div className='text-center'>
-                                    <img
-                                        src={require('./../../../Images/BooksImages/book-luv2code-1000.png')}
-                                        width='151'
-                                        height='233'
-                                        alt="book"
-                                    />
-                                    <h6 className='mt-2'>Book</h6>
-                                    <p>Luv2Code</p>
-                                    <a className='btn main-color text-white' href='#'>Reserve</a>
-                                </div>
-                            </div>
+                            {books.slice(6,9).map(book => (
+                                <ReturnBook book={book} key={book.id} />
+                            ))}
                         </div>
                     </div>
                     <button className='carousel-control-prev' type='button'
@@ -76,17 +119,7 @@ export const Carousel = () => {
             {/* Mobile */}
             <div className='d-lg-none mt-3'>
                 <div className='row d-flex justify-content-center align-items-center'>
-                    <div className='text-center'>
-                        <img
-                            src={require('./../../../Images/BooksImages/book-luv2code-1000.png')}
-                            width='151'
-                            height='233'
-                            alt="book"
-                        />
-                        <h6 className='mt-2'>Book</h6>
-                        <p>Luv2Code</p>
-                        <a className='btn main-color text-white' href='#'>Reserve</a>
-                    </div>
+                    <ReturnBook book={books[0]} key={books[0].id} />
                 </div>
             </div>
             <div className='homepage-carousel-title mt-3'>
